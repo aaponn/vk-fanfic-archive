@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VK Fanfic Archive</title>
+
+  <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f2f3f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #222;
+    }
+
+    .box {
+      width: min(90%, 420px);
+      padding: 30px;
+      box-sizing: border-box;
+      background: white;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0 0 12px;
+    }
+
+    p {
+      color: #666;
+      line-height: 1.5;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 22px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #447bba;
+      color: white;
+      margin-top: 10px;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+    }
+
+    #status {
+      margin-top: 20px;
+      word-break: break-word;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="box">
+    <h1>VK Fanfic Archive</h1>
+
+    <p>
+      Эта страница нужна для получения разрешения
+      на чтение публикаций VK.
+    </p>
+
+    <button id="authButton">
+      Разрешить доступ
+    </button>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const bridge = window.vkBridge;
+
+    const button = document.getElementById("authButton");
+    const status = document.getElementById("status");
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      status.textContent = "Запрашиваю разрешение VK…";
+
+      try {
+        const result = await bridge.send("VKWebAppGetAuthToken", {
+          app_id: 54771768,
+          scope: "wall"
+        });
+
+        if (result && result.access_token) {
+          status.textContent =
+            "Авторизация получена. Токен получен локально.";
+          
+          console.log("VK access token:", result.access_token);
+          console.log("VK user:", result.user_id);
+          console.log("Granted scope:", result.scope);
+
+          /*
+           * ВАЖНО:
+           * токен специально НЕ записываем в HTML,
+           * GitHub и URL страницы его не получают.
+           *
+           * Сейчас он нужен только локально,
+           * чтобы следующим шагом проверить wall.get.
+           */
+        } else {
+          status.textContent =
+            "VK не вернул access token.";
+          console.log(result);
+        }
+
+      } catch (error) {
+        console.error(error);
+
+        status.textContent =
+          "Ошибка авторизации. Открой консоль браузера для подробностей.";
+
+        button.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>
